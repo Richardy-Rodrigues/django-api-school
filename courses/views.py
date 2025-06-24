@@ -1,11 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets
 from rest_framework.generics import get_object_or_404
+from rest_framework.decorators import action
 
 from . import models, serializers
 
 
+"""
+VERSION 1
+"""
 class CoursesAPIView(generics.ListCreateAPIView):
     queryset = models.Course.objects.all()
     serializer_class = serializers.CourseSerializer
@@ -25,6 +29,7 @@ class EvaluationsAPIView(generics.ListCreateAPIView):
             return self.queryset.filter(course_id=self.kwargs.get('course_pk'))
         return self.queryset.all()
 
+
 class EvaluationAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.Evaluation.objects.all()
     serializer_class = serializers.EvaluationSerializer
@@ -33,3 +38,21 @@ class EvaluationAPIView(generics.RetrieveUpdateDestroyAPIView):
         if (self.kwargs.get('course_pk')):
             return get_object_or_404(self.get_queryset(), course_id=self.kwargs.get('course_pk'), pk=self.kwargs.get('evaluation_pk'))
         return get_object_or_404(self.get_queryset(), pk=self.kwargs.get('evaluation_pk'))
+
+
+"""
+VERSION 2
+"""
+class CourseViewSet(viewsets.ModelViewSet):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseSerializer
+
+    @action(detail=True, methods=['get'])
+    def evaluations(self, request, pk=None):
+        course = self.get_object()
+        serializer = serializers.EvaluationSerializer(course.evaluations.all(), many=True)
+        return Response(serializer.data)
+
+class EvaluationViewSet(viewsets.ModelViewSet):
+    queryset = models.Evaluation.objects.all()
+    serializer_class = serializers.EvaluationSerializer
