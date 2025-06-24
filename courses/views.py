@@ -1,40 +1,35 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
+from rest_framework.generics import get_object_or_404
 
 from . import models, serializers
 
 
-class CourseAPIView(APIView):
-    """
-    Courses API Rest
-    """
-
-    def get(self, request):
-        courses = models.Course.objects.all()
-        serializer = serializers.CourseSerializer(courses, many=True)
-        return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = serializers.CourseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+class CoursesAPIView(generics.ListCreateAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseSerializer
 
 
-class EvaluationAPIView(APIView):
-    """
-    Evaluations API Rest
-    """
+class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseSerializer
 
-    def get(self, request):
-        evaluations = models.Evaluation.objects.all()
-        serializer = serializers.EvaluationSerializer(evaluations, many=True)
-        return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = serializers.CourseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class EvaluationsAPIView(generics.ListCreateAPIView):
+    queryset = models.Evaluation.objects.all()
+    serializer_class = serializers.EvaluationSerializer
+
+    def get_queryset(self):
+        if (self.kwargs.get('course_pk')):
+            return self.queryset.filter(course_id=self.kwargs.get('course_pk'))
+        return self.queryset.all()
+
+class EvaluationAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Evaluation.objects.all()
+    serializer_class = serializers.EvaluationSerializer
+
+    def get_object(self):
+        if (self.kwargs.get('course_pk')):
+            return get_object_or_404(self.get_queryset(), course_id=self.kwargs.get('course_pk'), pk=self.kwargs.get('evaluation_pk'))
+        return get_object_or_404(self.get_queryset(), pk=self.kwargs.get('evaluation_pk'))
