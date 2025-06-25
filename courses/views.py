@@ -1,10 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, generics, viewsets
+from rest_framework import status, generics, viewsets, permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import action
 
 from . import models, serializers
+from permissions import IsSuperUser
 
 
 """
@@ -44,6 +45,9 @@ class EvaluationAPIView(generics.RetrieveUpdateDestroyAPIView):
 VERSION 2
 """
 class CourseViewSet(viewsets.ModelViewSet):
+    permission_classes = (
+        # IsSuperUser, -- Permission personalized
+        permissions.DjangoModelPermissions,)
     queryset = models.Course.objects.all()
     serializer_class = serializers.CourseSerializer
 
